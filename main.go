@@ -20,8 +20,7 @@ type program struct {
 	N        uint
 	nstr     string
 	weights  []uint64
-	LastRect borders
-	LastDiag uint // holds uppermost coordinate of the square which shares diagonal with plane.
+	LastLine uint
 }
 
 // setupLogger creates a new logger and binds it to file, returning the file to which the logger is writing.
