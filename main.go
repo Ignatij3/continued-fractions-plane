@@ -47,8 +47,8 @@ func parseArgs(p *program) {
 
 	flag.Parse()
 
-	NDEBUG = !NDEBUG
 	logger.Printf("INFO: Parsed flags: n: %d; workers: %d; debug: %t\n", p.N, p.WORKERS, NDEBUG)
+	NDEBUG = !NDEBUG
 }
 
 func main() {
