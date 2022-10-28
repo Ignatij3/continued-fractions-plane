@@ -1,4 +1,5 @@
-logs/*
-temp/*
-checker/*
+.vscode/**
+logs/**
+temp/**
+checker/**
 *.exe

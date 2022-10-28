@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// TODO переделать под прямые, идущие слева направо
+// TODO пофиксить restart
 
 // sets cache for numbers [0; CACHESIZE-1].
 const CACHESIZE = 10 + 1
@@ -116,7 +116,7 @@ func (p *program) getResultChan(exit context.Context) chan map[uint]uint64 {
 
 	if p.weights == nil {
 		p.weights = make([]uint64, p.N+1)
-		p.weights[1] = uint64(p.N)
+		p.weights[1] = uint64(float64(p.N) / math.Sqrt2)
 	}
 
 	reschan := make(chan map[uint]uint64, p.WORKERS)
@@ -190,6 +190,7 @@ work:
 		}
 	}
 
+	reschan <- *res
 	reschan <- p.flushCache(&cache)
 }
 
@@ -214,7 +215,7 @@ func processLine(radius, y uint, cache *[CACHESIZE]uint64, res *map[uint]uint64)
 // recordTerms updates cache and data map with information about continued fraction terms of the passed fraction.
 func recordTerms(radius uint, f fraction, cache *[CACHESIZE]uint64, data *map[uint]uint64) {
 	contFrac := getContinuedFrac(f.a, f.b)
-	fracAmt := uint64(radius / f.a)
+	fracAmt := uint64(math.Sqrt(float64((radius * radius)) / float64((f.a*f.a + f.b*f.b))))
 
 	for _, n := range contFrac {
 		if n < CACHESIZE {
