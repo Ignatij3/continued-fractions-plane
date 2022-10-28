@@ -74,16 +74,18 @@ func (p *program) processResults(reschan chan map[uint]uint64) {
 	processingEnd.Add(1)
 	defer processingEnd.Done()
 
+	cacheAmt := int(p.WORKERS/10) + 1
+
 	cachesync := &sync.WaitGroup{}
-	cachesync.Add(int(p.WORKERS))
-	cacheDrain := make(chan map[uint]uint64, p.WORKERS)
+	cachesync.Add(cacheAmt)
+	cacheDrain := make(chan map[uint]uint64, cacheAmt)
 
 	go func() {
 		cachesync.Wait()
 		close(cacheDrain)
 	}()
 
-	for i := uint(0); i < p.WORKERS; i++ {
+	for i := 0; i < cacheAmt; i++ {
 		go p.processToCache(reschan, cacheDrain, cachesync)
 	}
 
