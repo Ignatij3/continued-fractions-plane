@@ -57,6 +57,9 @@ func main() {
 	parseArgs(prg)
 	prg.nstr = strconv.Itoa(int(prg.N))
 
+	if _, err := os.Stat("temp"); os.IsNotExist(err) {
+		os.Mkdir("temp", os.ModeDir)
+	}
 	if err := prg.loadState(); err != nil {
 		logger.Printf("INFO: Couldn't load state of last execution: %v\n", err)
 	}
