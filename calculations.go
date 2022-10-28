@@ -13,6 +13,7 @@ import (
 
 // TODO пофиксить restart
 // TODO убрать cells
+// TODO fix comments and logs
 
 // sets cache for numbers [0; CACHESIZE-1].
 const CACHESIZE = 10 + 1
@@ -48,7 +49,7 @@ func (p *program) run() {
 		for {
 			select {
 			case <-time.After(30 * time.Minute):
-				logger.Printf("INFO: State after 30 minutes:\ncells: %d\nworkers: %d\nN: %d\nLastLine: %v\n", p.CELLS, p.WORKERS, p.N, p.LastLine)
+				logger.Printf("INFO: State after 30 minutes: LastLine: %v\n", p.LastLine)
 			case term := <-termination:
 				logger.Printf("INFO: Process has been interrupted with %v, cleaning up\n", term)
 				triggerExit()
@@ -74,15 +75,15 @@ func (p *program) processResults(reschan chan map[uint]uint64) {
 	defer processingEnd.Done()
 
 	cachesync := &sync.WaitGroup{}
-	cachesync.Add(int(p.CELLS))
-	cacheDrain := make(chan map[uint]uint64, p.CELLS)
+	cachesync.Add(int(p.WORKERS))
+	cacheDrain := make(chan map[uint]uint64, p.WORKERS)
 
 	go func() {
 		cachesync.Wait()
 		close(cacheDrain)
 	}()
 
-	for i := uint(0); i < p.CELLS; i++ {
+	for i := uint(0); i < p.WORKERS; i++ {
 		go p.processToCache(reschan, cacheDrain, cachesync)
 	}
 

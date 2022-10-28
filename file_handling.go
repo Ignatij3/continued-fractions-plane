@@ -49,7 +49,7 @@ func (p *program) loadState() error {
 		p.nstr = strconv.Itoa(int(newp.N))
 	}
 
-	logger.Printf("INFO: Loaded program state:\ncells: %d\nworkers: %d\nN: %d\nLastLine: %d\n", p.CELLS, p.WORKERS, p.N, p.LastLine)
+	logger.Printf("INFO: Loaded program state:\nworkers: %d\nN: %d\nLastLine: %d\n", p.WORKERS, p.N, p.LastLine)
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (p program) saveState() {
 
 	conffile, _ := os.OpenFile("temp/config"+p.nstr+".gob", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fs.ModePerm)
 
-	logger.Printf("INFO: Saving program state:\ncells: %d\nworkers: %d\nN: %d\nLastLine: %d\n", p.CELLS, p.WORKERS, p.N, p.LastLine)
+	logger.Printf("INFO: Saving program state:\nworkers: %d\nN: %d\nLastLine: %d\n", p.WORKERS, p.N, p.LastLine)
 	if err := gob.NewEncoder(conffile).Encode(p); err != nil {
 		logger.Printf("ERROR: Failed to save state: %v\n", err)
 	}

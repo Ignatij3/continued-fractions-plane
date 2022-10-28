@@ -15,7 +15,6 @@ var (
 )
 
 type program struct {
-	CELLS    uint
 	WORKERS  uint
 	N        uint
 	nstr     string
@@ -44,12 +43,11 @@ func setupLogger() *os.File {
 func parseArgs(p *program) bool {
 	restart := flag.Bool("restart", false, "start new calculations")
 	flag.UintVar(&p.N, "n", 0, "size of the square plane")
-	flag.UintVar(&p.CELLS, "cells", 1, "amount of the cells on one line, total amount of cells is approx. (cells^2)/2")
 	flag.UintVar(&p.WORKERS, "workers", 1, "amount of the parallel workers")
 	flag.BoolVar(&NDEBUG, "debug", false, "enables debug logs")
 
 	flag.Parse()
-	logger.Printf("INFO: Parsed flags: r: %t; n: %d; cellcount: %d; workers: %d; debug: %t\n", *restart, p.N, p.CELLS, p.WORKERS, NDEBUG)
+	logger.Printf("INFO: Parsed flags: r: %t; n: %d; workers: %d; debug: %t\n", *restart, p.N, p.WORKERS, NDEBUG)
 
 	NDEBUG = !NDEBUG
 	return *restart
