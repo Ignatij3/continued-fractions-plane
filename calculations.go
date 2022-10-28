@@ -12,6 +12,7 @@ import (
 )
 
 // TODO пофиксить restart
+// TODO убрать cells
 
 // sets cache for numbers [0; CACHESIZE-1].
 const CACHESIZE = 10 + 1
@@ -149,7 +150,7 @@ func (p *program) getJobChan() chan uint {
 
 	lineID := make(chan uint, p.WORKERS)
 	go func() {
-		for id := uint(1); id <= p.N; id++ {
+		for id := p.LastLine + 1; id <= p.N; id++ {
 			lineID <- id
 		}
 		close(lineID)
