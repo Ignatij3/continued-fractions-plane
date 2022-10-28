@@ -40,33 +40,28 @@ func setupLogger() *os.File {
 // -cells   - amount of the cells on one line, total amount of cells is approx. (cells^2)/2
 // -workers - amount of the parallel workers
 // -debug   - enables debug logs
-func parseArgs(p *program) bool {
-	restart := flag.Bool("restart", false, "start new calculations")
+func parseArgs(p *program) {
 	flag.UintVar(&p.N, "n", 0, "size of the square plane")
 	flag.UintVar(&p.WORKERS, "workers", 1, "amount of the parallel workers")
 	flag.BoolVar(&NDEBUG, "debug", false, "enables debug logs")
 
 	flag.Parse()
-	logger.Printf("INFO: Parsed flags: r: %t; n: %d; workers: %d; debug: %t\n", *restart, p.N, p.WORKERS, NDEBUG)
 
 	NDEBUG = !NDEBUG
-	return *restart
+	logger.Printf("INFO: Parsed flags: n: %d; workers: %d; debug: %t\n", p.N, p.WORKERS, NDEBUG)
 }
 
 func main() {
 	defer setupLogger().Close()
 	prg := &program{}
-	restart := parseArgs(prg)
+	parseArgs(prg)
 	prg.nstr = strconv.Itoa(int(prg.N))
 
-	if !restart {
-		if err := prg.loadState(); err != nil {
-			logger.Fatalf("FATAL: Couldn't load state of last execution: %v\n", err)
-		}
-		prg.weights = make([]uint64, prg.N+1)
-		if err := prg.getTermData(); err != nil {
-			logger.Fatalf("FATAL: Couldn't load fraction term data from last execution: %v\n", err)
-		}
+	if err := prg.loadState(); err != nil {
+		logger.Printf("INFO: Couldn't load state of last execution: %v\n", err)
+	}
+	if err := prg.getTermData(); err != nil {
+		logger.Printf("INFO: Couldn't load fraction term data from last execution: %v\n", err)
 	}
 
 	prg.run()

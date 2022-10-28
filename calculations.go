@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-// TODO пофиксить restart
-// TODO убрать cells
 // TODO fix comments and logs
 
 // sets cache for numbers [0; CACHESIZE-1].
