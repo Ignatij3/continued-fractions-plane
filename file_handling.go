@@ -26,7 +26,6 @@ func (p *program) loadState() error {
 
 	conffile, err := os.OpenFile("temp/config"+p.nstr+".gob", os.O_RDONLY, fs.ModePerm)
 	if err != nil {
-		logger.Printf("ERROR: Cannot load state of last execution: %v\n", err)
 		return err
 	}
 	defer conffile.Close()
@@ -34,12 +33,10 @@ func (p *program) loadState() error {
 	newp := &program{}
 
 	if err = gob.NewDecoder(conffile).Decode(newp); err != nil {
-		logger.Printf("ERROR: Previous state decode unsuccessful: %v\n", err)
 		return err
 	}
 
 	if newp.N != p.N && p.N != 0 {
-		logger.Printf("ERROR: Config plane size and required plane size don't match\n")
 		return errors.New("loadState: error: config plane size and required plane size don't match")
 	} else {
 		if p.WORKERS != 0 {
@@ -54,15 +51,17 @@ func (p *program) loadState() error {
 }
 
 // saveState saves program's state.
-func (p program) saveState() {
+func (p program) saveState() error {
 	logger.Println("INFO: Saving program's state")
 
 	conffile, _ := os.OpenFile("temp/config"+p.nstr+".gob", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fs.ModePerm)
 
 	logger.Printf("INFO: Saving program state:\nworkers: %d\nN: %d\nLastLine: %d\n", p.WORKERS, p.N, p.LastLine)
 	if err := gob.NewEncoder(conffile).Encode(p); err != nil {
-		logger.Printf("ERROR: Failed to save state: %v\n", err)
+		return err
 	}
+
+	return nil
 }
 
 // getTermData loads term net weights saved from last execution if it was stopped prematurely. If data load unsuccessful, the function returns non-nil error.
@@ -71,43 +70,41 @@ func (p *program) getTermData() error {
 
 	resfile, err := os.OpenFile("temp/res"+p.nstr+".bin", os.O_RDONLY, fs.ModePerm)
 	if err != nil {
-		logger.Printf("ERROR: Couldn't open %s: %v\n", "res"+p.nstr+".bin", err)
 		return err
 	}
 	defer resfile.Close()
 
 	if err := gob.NewDecoder(resfile).Decode(&p.weights); err != nil {
-		logger.Printf("ERROR: Couldn't read data from %s: %v\n", resfile.Name(), err)
 		return err
 	}
 	return nil
 }
 
 // flushTermData saves continued fraction terms's net weights.
-func (p program) flushTermData() {
+func (p program) flushTermData() error {
 	logger.Println("INFO: Saving obtained data")
 
 	resfile, err := os.OpenFile("temp/res"+p.nstr+".bin", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, fs.ModePerm)
 	if err != nil {
-		logger.Printf("ERROR: Couldn't open term data file for writing: %v\n", err)
-		return
+		return err
 	}
 	defer resfile.Close()
 
 	if err := gob.NewEncoder(resfile).Encode(p.weights); err != nil {
-		logger.Printf("ERROR: Failed to write data to the file: %v\n", err)
-		return
+		return err
 	}
+
+	return nil
 }
 
 // saveFinalResults saves calculated term weights in human-readable form.
-func (p program) saveFinalResults() {
+func (p program) saveFinalResults() error {
 	logger.Println("INFO: Saving final results")
 
 	resfile, err := os.OpenFile("result_"+p.nstr+".dat", os.O_RDWR|os.O_CREATE|os.O_TRUNC, fs.ModePerm)
 	if err != nil {
 		logger.Printf("ERROR: Couldn't open file for the result output: %v\n", err)
-		return
+		return err
 	}
 	defer resfile.Close()
 
@@ -119,9 +116,11 @@ func (p program) saveFinalResults() {
 	writer := bufio.NewWriter(resfile)
 	if _, err = writer.Write(buffer.Bytes()); err != nil {
 		logger.Printf("ERROR: Couldn't write final results to file: %v\n", err)
-		return
+		return err
 	}
 	writer.Flush()
+
+	return nil
 }
 
 // clearFiles deletes config and term data files.
