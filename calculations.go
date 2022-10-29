@@ -46,8 +46,8 @@ func (p *program) run() {
 
 		for {
 			select {
-			case <-time.After(30 * time.Minute):
-				logger.Printf("INFO: State after 30 minutes: LastLine: %v\n", p.LastLine)
+			case <-time.After(10 * time.Minute):
+				logger.Printf("INFO: Saving state after 10 minutes: LastLine: %v\n", p.LastLine)
 			case term := <-termination:
 				logger.Printf("INFO: Process has been interrupted with %v, cleaning up\n", term)
 				triggerExit()
