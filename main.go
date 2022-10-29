@@ -54,7 +54,7 @@ func main() {
 	prg.nstr = strconv.Itoa(int(prg.N))
 	defer setupLogger(prg.nstr).Close()
 
-	logger.Printf("INFO: Parsed flags: n: %d; workers: %d; debug: %t\n", prg.N, prg.WORKERS, NDEBUG)
+	logger.Printf("INFO: Parsed flags: n: %d; workers: %d; debug: %t\n", prg.N, prg.WORKERS, !NDEBUG)
 
 	if _, err := os.Stat("temp"); os.IsNotExist(err) {
 		os.Mkdir("temp", os.ModeDir)
