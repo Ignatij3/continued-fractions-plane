@@ -165,9 +165,11 @@ func (p *program) getJobChan() chan uint {
 func (p *program) compute(ressync *sync.WaitGroup, linelock *sync.Mutex, jobs chan uint, reschan chan map[uint]uint64, exit context.Context) {
 	defer ressync.Done()
 	var (
-		cache      [CACHESIZE]uint64
-		totalFracs uint
-		res        *map[uint]uint64 = &map[uint]uint64{}
+		cache [CACHESIZE]uint64
+		res   *map[uint]uint64 = &map[uint]uint64{}
+
+		totalLines    uint
+		lineTolerance uint = p.N / (p.WORKERS * 2)
 	)
 
 work:
@@ -176,7 +178,8 @@ work:
 		case <-exit.Done():
 			break work
 		default:
-			totalFracs += processLine(p.N, line, &cache, res)
+			processLine(p.N, line, &cache, res)
+			totalLines++
 
 			if line >= p.LastLine {
 				linelock.Lock()
@@ -184,8 +187,8 @@ work:
 				linelock.Unlock()
 			}
 
-			if totalFracs >= p.N {
-				totalFracs = 0
+			if totalLines >= lineTolerance {
+				totalLines = 0
 				reschan <- *res
 				res = &map[uint]uint64{}
 			}
