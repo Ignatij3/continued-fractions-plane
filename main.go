@@ -28,7 +28,7 @@ func setupLogger(radius string) *os.File {
 		os.Mkdir("logs", os.ModeDir)
 	}
 
-	logfile, _ := os.OpenFile("logs/"+radius+".log", os.O_CREATE, fs.ModePerm)
+	logfile, _ := os.OpenFile("logs/"+radius+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, fs.ModePerm)
 	logger = log.New(logfile, "", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	return logfile
 }
