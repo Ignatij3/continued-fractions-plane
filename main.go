@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 var (
@@ -23,13 +22,13 @@ type program struct {
 }
 
 // setupLogger creates a new logger and binds it to file, returning the file to which the logger is writing.
-func setupLogger() *os.File {
+func setupLogger(radius string) *os.File {
 	_, err := os.Stat("logs")
 	if os.IsNotExist(err) {
 		os.Mkdir("logs", os.ModeDir)
 	}
 
-	logfile, _ := os.OpenFile("logs/"+time.Now().Format("02.01.2006_15.04.05.999999")+".log", os.O_CREATE, fs.ModePerm)
+	logfile, _ := os.OpenFile("logs/"+radius+".log", os.O_CREATE, fs.ModePerm)
 	logger = log.New(logfile, "", log.Ltime|log.Lmicroseconds|log.Lshortfile)
 	return logfile
 }
@@ -46,16 +45,16 @@ func parseArgs(p *program) {
 	flag.BoolVar(&NDEBUG, "debug", false, "enables debug logs")
 
 	flag.Parse()
-
-	logger.Printf("INFO: Parsed flags: n: %d; workers: %d; debug: %t\n", p.N, p.WORKERS, NDEBUG)
 	NDEBUG = !NDEBUG
 }
 
 func main() {
-	defer setupLogger().Close()
 	prg := &program{}
 	parseArgs(prg)
 	prg.nstr = strconv.Itoa(int(prg.N))
+	defer setupLogger(prg.nstr).Close()
+
+	logger.Printf("INFO: Parsed flags: n: %d; workers: %d; debug: %t\n", prg.N, prg.WORKERS, NDEBUG)
 
 	if _, err := os.Stat("temp"); os.IsNotExist(err) {
 		os.Mkdir("temp", os.ModeDir)

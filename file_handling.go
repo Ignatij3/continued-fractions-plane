@@ -103,7 +103,6 @@ func (p program) saveFinalResults() error {
 
 	resfile, err := os.OpenFile("result_"+p.nstr+".dat", os.O_RDWR|os.O_CREATE|os.O_TRUNC, fs.ModePerm)
 	if err != nil {
-		logger.Printf("ERROR: Couldn't open file for the result output: %v\n", err)
 		return err
 	}
 	defer resfile.Close()
@@ -115,7 +114,6 @@ func (p program) saveFinalResults() error {
 
 	writer := bufio.NewWriter(resfile)
 	if _, err = writer.Write(buffer.Bytes()); err != nil {
-		logger.Printf("ERROR: Couldn't write final results to file: %v\n", err)
 		return err
 	}
 	writer.Flush()
