@@ -67,9 +67,8 @@ func main() {
 	}
 
 	prg.run()
+	prg.clearFiles()
 	if err := prg.saveFinalResults(); err != nil {
-		prg.clearFiles()
 		log.Fatalf("FATAL: Couldn't write final results to file: %v\n Obtained data: %v\n", err, prg.weights)
 	}
-	prg.clearFiles()
 }
