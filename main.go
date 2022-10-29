@@ -29,7 +29,7 @@ func setupLogger(radius string) *os.File {
 	}
 
 	logfile, _ := os.OpenFile("logs/"+radius+".log", os.O_CREATE, fs.ModePerm)
-	logger = log.New(logfile, "", log.Ltime|log.Lmicroseconds|log.Lshortfile)
+	logger = log.New(logfile, "", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	return logfile
 }
 
