@@ -87,12 +87,6 @@ func (p *program) processResults(reschan chan map[uint]uint64) {
 		go p.processToCache(reschan, cacheDrain, cachesync)
 	}
 
-	for res := range reschan {
-		for key, value := range res {
-			p.weights[key] += uint64(value)
-		}
-	}
-
 	for cachedata := range cacheDrain {
 		for key, value := range cachedata {
 			p.weights[key] += uint64(value)
@@ -167,30 +161,26 @@ func (p *program) compute(ressync *sync.WaitGroup, linelock *sync.Mutex, jobs ch
 	var (
 		cache [CACHESIZE]uint64
 		res   *map[uint]uint64 = &map[uint]uint64{}
-
-		totalLines    uint
-		lineTolerance uint = p.N / (p.WORKERS * 2)
 	)
+
+	cooldown := time.NewTimer(time.Minute)
 
 work:
 	for line := range jobs {
 		select {
+		case <-cooldown.C:
+			*reschan <- *res
+			res = &map[uint]uint64{}
+
 		case <-exit.Done():
 			break work
+
 		default:
 			processLine(p.N, line, &cache, res)
-			totalLines++
-
 			if line >= p.LastLine {
 				linelock.Lock()
 				p.LastLine = line
 				linelock.Unlock()
-			}
-
-			if totalLines >= lineTolerance {
-				totalLines = 0
-				reschan <- *res
-				res = &map[uint]uint64{}
 			}
 		}
 	}
