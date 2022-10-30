@@ -169,7 +169,7 @@ work:
 	for line := range jobs {
 		select {
 		case <-cooldown.C:
-			*reschan <- *res
+			reschan <- *res
 			res = &map[uint]uint64{}
 
 		case <-exit.Done():
