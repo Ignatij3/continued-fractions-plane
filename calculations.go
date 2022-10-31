@@ -38,8 +38,7 @@ func (p *program) run() {
 	cleanupSync.Add(1)
 
 	go func() {
-		logger.Println("INFO: Setting up state backup")
-		defer close(finish)
+		logger.Println("INFO: Setting up state monitoring")
 
 		termination := make(chan os.Signal, 1)
 		signal.Notify(termination, os.Interrupt, syscall.SIGTERM)
@@ -47,8 +46,6 @@ func (p *program) run() {
 	outer:
 		for {
 			select {
-			case <-time.After(10 * time.Minute):
-				logger.Printf("INFO: Saving state after 10 minutes: LastLine: %v\n", p.LastLine)
 			case term := <-termination:
 				logger.Printf("INFO: Process has been interrupted with %v, cleaning up\n", term)
 				triggerExit()
