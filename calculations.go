@@ -16,8 +16,6 @@ import (
 // sets cache for numbers [0; CACHESIZE-1].
 const CACHESIZE = 10 + 1
 
-var processingEnd *sync.WaitGroup = &sync.WaitGroup{}
-
 // fraction represents fraction a/b, where a,b ∈ ℕ.
 type fraction struct {
 	a, b uint
@@ -35,8 +33,10 @@ func (p *program) run() {
 	}()
 
 	exit, triggerExit := context.WithCancel(context.Background())
-
 	finish := make(chan struct{})
+	cleanupSync := &sync.WaitGroup{}
+	cleanupSync.Add(1)
+
 	go func() {
 		logger.Println("INFO: Setting up state backup")
 		defer close(finish)
@@ -44,6 +44,7 @@ func (p *program) run() {
 		termination := make(chan os.Signal, 1)
 		signal.Notify(termination, os.Interrupt, syscall.SIGTERM)
 
+	outer:
 		for {
 			select {
 			case <-time.After(10 * time.Minute):
@@ -51,27 +52,32 @@ func (p *program) run() {
 			case term := <-termination:
 				logger.Printf("INFO: Process has been interrupted with %v, cleaning up\n", term)
 				triggerExit()
-				processingEnd.Wait()
+				<-finish
 				p.updateState()
-				os.Exit(0)
+				break outer
+
 			case <-finish:
-				return
+				p.clearFiles()
+				if err := p.saveFinalResults(); err != nil {
+					logger.Fatalf("FATAL: Couldn't write final results to file: %v\n Obtained data: %v\n", err, p.weights)
+				}
+				break outer
 			}
 		}
+
+		cleanupSync.Done()
+		close(finish)
 	}()
 
 	reschan := p.getResultChan(exit)
 	p.processResults(reschan)
 
 	finish <- struct{}{}
-	<-finish
+	cleanupSync.Wait()
 }
 
 // processResults receives term weights through reschan and adds them to underlying array.
 func (p *program) processResults(reschan chan map[uint]uint64) {
-	processingEnd.Add(1)
-	defer processingEnd.Done()
-
 	cacheAmt := int(p.WORKERS/10) + 1
 
 	cachesync := &sync.WaitGroup{}
