@@ -21,7 +21,7 @@ type program struct {
 	LastLine uint
 }
 
-// setupLogger creates a new logger and binds it to file, returning the file to which the logger is writing.
+// setupLogger creates a new logger and binds it to log file, returning the file to which the logger is writing.
 func setupLogger(radius string) *os.File {
 	_, err := os.Stat("logs")
 	if os.IsNotExist(err) {
@@ -34,11 +34,10 @@ func setupLogger(radius string) *os.File {
 }
 
 // parseArgs parses following command-line agruments:
-// -restart - start new calculations
 // -n       - size of the square plane
-// -cells   - amount of the cells on one line, total amount of cells is approx. (cells^2)/2
 // -workers - amount of the parallel workers
 // -debug   - enables debug logs
+// Also, it sets value for NDEBUG flag.
 func parseArgs(p *program) {
 	flag.UintVar(&p.N, "n", 0, "size of the square plane")
 	flag.UintVar(&p.WORKERS, "workers", 1, "amount of the parallel workers")
@@ -56,15 +55,6 @@ func main() {
 
 	logger.Printf("INFO: Parsed flags: n: %d; workers: %d; debug: %t\n", prg.N, prg.WORKERS, !NDEBUG)
 
-	if _, err := os.Stat("temp"); os.IsNotExist(err) {
-		os.Mkdir("temp", os.ModeDir)
-	}
-	if err := prg.loadState(); err != nil {
-		logger.Printf("INFO: Couldn't load state of last execution: %v\n", err)
-	}
-	if err := prg.getTermData(); err != nil {
-		logger.Printf("INFO: Couldn't load fraction term data from last execution: %v\n", err)
-	}
-
+	prg.restoreState()
 	prg.run()
 }

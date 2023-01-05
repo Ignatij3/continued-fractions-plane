@@ -20,7 +20,23 @@ func (p program) updateState() {
 	p.flushTermData()
 }
 
-// loadState loads state from the last execution. If state load unsuccessful, the function returns non-nil error.
+// restoreState tries to restore state of last execution, if program was launched previously
+func (p *program) restoreState() {
+	if _, err := os.Stat("temp"); os.IsNotExist(err) {
+		os.Mkdir("temp", os.ModeDir)
+	}
+	if err := p.loadState(); err != nil {
+		logger.Printf("INFO: Couldn't load state of last execution: %v\n", err)
+	} else {
+		logger.Printf("INFO: State of last execution loaded successfully: %v\n", err)
+		if err := p.getTermData(); err != nil {
+			logger.Printf("INFO: Couldn't load fraction term data from last execution, resetting state: %v\n", err)
+		}
+		p.LastLine = 0
+	}
+}
+
+// loadState loads state from the last execution, which includes number of workers and last processed line. If state load unsuccessful, the function returns non-nil error.
 func (p *program) loadState() error {
 	logger.Printf("INFO: Loading state from last execution")
 
@@ -50,7 +66,7 @@ func (p *program) loadState() error {
 	return nil
 }
 
-// saveState saves program's state.
+// saveState saves program's state in configuration file.
 func (p program) saveState() error {
 	logger.Println("INFO: Saving program's state")
 
@@ -64,7 +80,7 @@ func (p program) saveState() error {
 	return nil
 }
 
-// getTermData loads term net weights saved from last execution if it was stopped prematurely. If data load unsuccessful, the function returns non-nil error.
+// getTermData loads term weights saved from last execution if it was stopped prematurely. If data load unsuccessful, the function returns non-nil error.
 func (p *program) getTermData() error {
 	logger.Println("INFO: Obtaining fraction term weights")
 
@@ -80,7 +96,7 @@ func (p *program) getTermData() error {
 	return nil
 }
 
-// flushTermData saves continued fraction terms's net weights.
+// flushTermData saves continued fraction terms' weights.
 func (p program) flushTermData() error {
 	logger.Println("INFO: Saving obtained data")
 

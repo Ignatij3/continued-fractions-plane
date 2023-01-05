@@ -11,12 +11,10 @@ import (
 	"time"
 )
 
-// TODO fix comments and logs
-
 // sets cache for numbers [0; CACHESIZE-1].
 const CACHESIZE = 10 + 1
 
-// fraction represents fraction a/b, where a,b ∈ ℕ.
+// fraction represents rational fraction a/b.
 type fraction struct {
 	a, b uint
 }
@@ -73,7 +71,7 @@ func (p *program) run() {
 	cleanupSync.Wait()
 }
 
-// processResults receives term weights through reschan and adds them to underlying array.
+// processResults receives term weights through reschan and passes them to underlying storage.
 func (p *program) processResults(reschan chan map[uint]uint64) {
 	cacheAmt := int(p.WORKERS/10) + 1
 
@@ -109,7 +107,7 @@ func (p *program) processToCache(reschan, cacheDrain chan map[uint]uint64, cache
 	cacheDrain <- cache
 }
 
-// distributeJobs distributes rectangles among workers and returns channel where the results would be sent.
+// getResultChan creates and returns channel where continued fraction terms would be sent and initializes all workers.
 func (p *program) getResultChan(exit context.Context) chan map[uint]uint64 {
 	logger.Println("INFO: Initializing and distributing jobs")
 
@@ -131,7 +129,7 @@ func (p *program) getResultChan(exit context.Context) chan map[uint]uint64 {
 
 	go func() {
 		ressync.Wait()
-		for len(reschan) != 0 {
+		for len(reschan) != 0 { //make something better?
 		}
 		logger.Println("INFO: Closing results channel")
 		close(reschan)
@@ -140,9 +138,7 @@ func (p *program) getResultChan(exit context.Context) chan map[uint]uint64 {
 	return reschan
 }
 
-// initJobs passes rectangles that need to be processed through diagonal and rects channels.
-// Rects that share diagonal with N×N plane are sent to channel diagonal,
-// any other rects that lie strictly above diagonal are sent to channel rects.
+// getJobChan creates and returns channels where line ids would be sent for workers.
 func (p *program) getJobChan() chan uint {
 	logger.Println("INFO: Initializing lines")
 
@@ -156,9 +152,10 @@ func (p *program) getJobChan() chan uint {
 	return lineID
 }
 
-// computeLines counts continued fraction terms in rectangles above the diagonal of the plane N×N.
-// It counts terms of irreducible fractions number of times fractions are present in the plane N×N, it also takes into account that the reverse of a/b (where a > b)
-// has the same terms as a/b, but with the leading zero.
+// compute counts continued fraction terms in horizontal lines. For performance reasons, only fractions above diagonal of square NxN are processed.
+// It counts terms of irreducible fractions number of times fractions are present in the first circle's quarter with radius N,
+// it also takes into account that the reverse of a/b (where a > b) has the same terms as a/b, but with the leading zero.
+// Upon receiving exit signal, it finishes processing current line and exits.
 func (p *program) compute(ressync *sync.WaitGroup, linelock *sync.Mutex, jobs chan uint, reschan chan map[uint]uint64, exit context.Context) {
 	defer ressync.Done()
 	var (
@@ -192,7 +189,7 @@ work:
 	reschan <- p.flushCache(&cache)
 }
 
-// aboveDiagonal counts continued fraction terms above the diagonal of the plane N×N, the jobs's squares must be strictly above the diagonal (not touching it) of the plane.
+// processLine counts continued fraction terms in the given horizontal line.
 func processLine(radius, y uint, cache *[CACHESIZE]uint64, res *map[uint]uint64) uint {
 	rightBoundSquared := radius*radius - y*y
 	if y <= uint(float64(radius)/math.Sqrt2) {
@@ -224,7 +221,7 @@ func recordTerms(radius uint, f fraction, cache *[CACHESIZE]uint64, data *map[ui
 	}
 }
 
-// flushCache records weights from cache to data, cache is then emptied.
+// flushCache flushes weights from cache to data.
 func (p *program) flushCache(cache *[CACHESIZE]uint64) map[uint]uint64 {
 	res := map[uint]uint64{}
 	for key := uint(1); key < CACHESIZE; key++ {
