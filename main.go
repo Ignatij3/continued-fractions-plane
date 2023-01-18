@@ -27,28 +27,28 @@ func initLogger(radius int) *os.File {
 }
 
 // parseArgs parses and returns following command-line agruments:
-// -n       - size of the square plane
-// -workers - amount of the parallel workers
+// -r       - radius of the quarter
+// -workers - amount of concurrent workers
 func parseArgs() (uint, uint) {
-	var n, workers uint
+	var r, workers uint
 
-	flag.UintVar(&n, "n", 0, "size of the square plane")
-	flag.UintVar(&workers, "workers", 1, "amount of the parallel workers")
+	flag.UintVar(&r, "r", 0, "radius of the quarter")
+	flag.UintVar(&workers, "workers", 1, "amount of concurrent workers")
 
 	flag.Parse()
-	return n, workers
+	return r, workers
 }
 
 // saveResults writes results to a file, in human-readable form.
-func saveResults(n int, weights []uint64) {
-	resfile, err := os.OpenFile("result_"+strconv.Itoa(n)+".dat", os.O_RDWR|os.O_CREATE|os.O_TRUNC, fs.ModePerm)
+func saveResults(r int, weights []uint64) {
+	resfile, err := os.OpenFile("result_"+strconv.Itoa(r)+".dat", os.O_RDWR|os.O_CREATE|os.O_TRUNC, fs.ModePerm)
 	if err != nil {
 		log.Fatalf("ERROR: Couldn't open file to save results to: %v\n", err)
 	}
 	defer resfile.Close()
 
 	var buffer bytes.Buffer
-	for key := 1; key <= n; key++ {
+	for key := 1; key <= r; key++ {
 		buffer.WriteString(fmt.Sprintf("%d:%d\n", key, weights[key]))
 	}
 
@@ -60,12 +60,12 @@ func saveResults(n int, weights []uint64) {
 }
 
 func main() {
-	n, workers := parseArgs()
+	r, workers := parseArgs()
 
-	initLogger(int(n))
-	log.Printf("INFO: Parsed flags: n: %d; workers: %d;\n", n, workers)
+	initLogger(int(r))
+	log.Printf("INFO: Parsed flags: r: %d; workers: %d;\n", r, workers)
 
-	pln := plane.InitNewPlane(n, workers)
+	pln := plane.InitNewPlane(r, workers)
 
 	if err := pln.TryToRestoreState(); err != nil {
 		log.Printf("INFO: Couldn't restore state of last execution: %v\n", err)
@@ -75,6 +75,6 @@ func main() {
 	<-pln.NotifyOnFinish()
 	log.Printf("INFO: Calculations have stopped, finished state: %t\n", pln.IsFinished())
 	if pln.IsFinished() {
-		saveResults(int(n), pln.GetResults())
+		saveResults(int(r), pln.GetResults())
 	}
 }

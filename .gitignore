@@ -2,5 +2,6 @@
 logs/**
 temp/**
 checker/**
+bin/**
 *.exe
 *.dat
